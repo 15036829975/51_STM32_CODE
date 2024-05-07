@@ -1,0 +1,215 @@
+C51 COMPILER V9.60.7.0   UART                                                              11/20/2023 18:28:30 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\Objects\uart.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE uart.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\uart
+                    -.lst) TABS(2) OBJECT(.\Objects\uart.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "common.h"
+   3          #include "uart.h"
+   4          
+   5          /*Define UART parity mode*/
+   6          #define NONE_PARITY     0   //None parity
+   7          #define ODD_PARITY      1   //Odd parity
+   8          #define EVEN_PARITY     2   //Even parity
+   9          #define MARK_PARITY     3   //Mark parity
+  10          #define SPACE_PARITY    4   //Space parity
+  11          
+  12          #define PARITYBIT NONE_PARITY   //Testing even parity
+  13          
+  14          //发送忙标志
+  15          bit busy;
+  16          //串口结构体变量
+  17          COMx_Define COM1;
+  18          //接收缓冲区变量
+  19          unsigned char   xdata RX1_Buffer[COM_RX1_Lenth];//接受缓存区
+  20          unsigned short   RX_frameTimeOut = DEFAULT_RX_TIMEOUT; //帧接收超时
+  21          
+  22          void uart_int(void) interrupt 4 using 1
+  23          {
+  24   1          //接收一个字节完成中断
+  25   1          if(RI)
+  26   1          {
+  27   2              RI = 0;
+  28   2              if(COM1.B_RX_OK == 0)
+  29   2              {
+  30   3                  //判断接收的缓冲区是否满
+  31   3                  if(COM1.RX_Cnt >= COM_RX1_Lenth)
+  32   3                  {
+  33   4                      //接收完成置1。
+  34   4                      COM1.B_RX_OK = 1;
+  35   4                  }
+  36   3                  else
+  37   3                  {
+  38   4                      //将接受的数据填入接收缓存。
+  39   4                      RX1_Buffer[COM1.RX_Cnt++] = SBUF;
+  40   4          //重置两帧数据的时间间隔变量。
+  41   4                      COM1.RX_TimeOut = RX_frameTimeOut;
+  42   4                  }
+  43   3              }
+  44   2          }
+  45   1          //发送一个字节完成中断
+  46   1          if(TI)
+  47   1          {
+  48   2              TI = 0;             //Clear transmit interrupt flag
+  49   2              //清除发送忙标志位
+  50   2              busy = 0;           //Clear transmit busy flag
+  51   2          }
+  52   1      }
+  53          
+  54          /*
+C51 COMPILER V9.60.7.0   UART                                                              11/20/2023 18:28:30 PAGE 2   
+
+  55          *uart_init
+  56          *串口初始化
+  57          *baud 设定的 波特率
+  58          */
+  59          
+  60          void uart_init(unsigned int baud)
+  61          {
+  62   1      #if (PARITYBIT == NONE_PARITY)
+  63   1          SCON = 0x50;      //8-bit variable UART
+  64   1      #elif (PARITYBIT == ODD_PARITY) || (PARITYBIT == EVEN_PARITY) || (PARITYBIT == MARK_PARITY)
+                  SCON = 0xda;      //9-bit variable UART, parity bit initial to 1
+              #elif (PARITYBIT == SPACE_PARITY)
+                  SCON = 0xd2;      //9-bit variable UART, parity bit initial to 0
+              #endif
+  69   1      
+  70   1          COM1.B_RX_OK = 0;
+  71   1          //使用定时器2，作为串口
+  72   1          TL2 = RCAP2L = (65536-(UART_FOSC/32/baud)); //Set auto-reload vaule
+  73   1          TH2 = RCAP2H = (65536-(UART_FOSC/32/baud)) >> 8;
+  74   1          T2CON = 0x34;     //Timer2 start run
+  75   1          ES = 1;         //Enable UART interrupt
+  76   1          EA = 1;         //Open master interrupt switch
+  77   1      }
+  78          
+  79          /*
+  80          *uart_write2buff
+  81          *发送单个字函数
+  82          */
+  83          void uart_write2buff(unsigned char dat)
+  84          {
+  85   1          
+  86   1          while (busy);     //Wait for the completion of the previous data is sent
+  87   1          ACC = dat;        //Calculate the even parity bit P (PSW.0)
+  88   1          if (P)          //Set the parity bit according to P
+  89   1          {
+  90   2      #if (PARITYBIT == ODD_PARITY)
+                      TB8 = 0;      //Set parity bit to 0
+              #elif (PARITYBIT == EVEN_PARITY)
+                      TB8 = 1;      //Set parity bit to 1
+              #endif
+  95   2          }
+  96   1          else
+  97   1          {
+  98   2      #if (PARITYBIT == ODD_PARITY)
+                      TB8 = 1;      //Set parity bit to 1
+              #elif (PARITYBIT == EVEN_PARITY)
+                      TB8 = 0;      //Set parity bit to 0
+              #endif
+ 103   2          }
+ 104   1          busy = 1;
+ 105   1          SBUF = ACC;       //Send data to UART buffer
+ 106   1      }
+ 107          /*
+ 108          *uart_send
+ 109          *发送指定长度的字符
+ 110          *bufs 发送的数据
+ 111          *len 要发生的长度
+ 112          */
+ 113          void uart_send(unsigned char *bufs,unsigned char len)
+ 114          {
+ 115   1          if (len != SERIAL_AUTO_LEN)//这里SERIAL_AUTO_LEN最大为255，如果发送的字符串长度不超过255，都是按用户写
+             -入的字符长度发送
+C51 COMPILER V9.60.7.0   UART                                                              11/20/2023 18:28:30 PAGE 3   
+
+ 116   1          {
+ 117   2              while (len--)//等待发送完成
+ 118   2              {
+ 119   3                  uart_write2buff(*bufs);//发送单个字符
+ 120   3                  bufs ++;//指针加1
+ 121   3              }
+ 122   2          }
+ 123   1          else//如果字长等于或超过255，不按用户写入字长发送
+ 124   1          {
+ 125   2              for (; *bufs != 0;  bufs++)  uart_write2buff(*bufs);//把字符逐个发送出去
+ 126   2          }
+ 127   1      }
+ 128          /*
+ 129          *uart_recv_wait
+ 130          *等待串口收到的数据
+ 131          *wait_ms 等待的时间，超过直接返回0
+ 132          *frame_timeout_ms 接收的两个帧数据之间的时间间隔。
+ 133          */
+ 134          unsigned char uart_recv_wait(unsigned short wait_ms, unsigned short frame_timeout_ms)
+ 135          {
+ 136   1          COM1.RX_TimeOut = wait_ms;
+ 137   1          COM1.B_RX_OK = 0;
+ 138   1          RX_frameTimeOut = frame_timeout_ms;
+ 139   1      
+ 140   1          do
+ 141   1          {
+ 142   2              delay_ms(1);
+ 143   2              if(COM1.RX_TimeOut > 0)   //超时计数
+ 144   2              {
+ 145   3                  //每1毫秒，检查是否接收超时或完成标志
+ 146   3                  if(--COM1.RX_TimeOut == 0 || COM1.B_RX_OK == 1)
+ 147   3                  {
+ 148   4                      unsigned char ret;
+ 149   4      
+ 150   4                      ret = COM1.RX_Cnt;
+ 151   4                      COM1.RX_Cnt = 0;
+ 152   4                      //返回接收的字节数
+ 153   4                      return ret;
+ 154   4                  }
+ 155   3              }
+ 156   2          }
+ 157   1          while(1);
+ 158   1      
+ 159   1          return 0;
+ 160   1      }
+ 161          
+ 162          /*
+ 163          *uart_recv_check
+ 164          *检查串口的接收缓冲区是否有收到数据。
+ 165          *返回值:
+ 166          *UART_RXOK表示接收数据完成；
+ 167          *UART_RXING 表示正在接收数据；
+ 168          *UART_RXNONE 表示没有接收到数据；
+ 169          */
+ 170          unsigned char uart_recv_check(void)
+ 171          {
+ 172   1          if (COM1.B_RX_OK == 1)
+ 173   1          {
+ 174   2              return UART_RXOK;
+ 175   2          }
+ 176   1          if (COM1.RX_Cnt > 0)
+ 177   1          {
+C51 COMPILER V9.60.7.0   UART                                                              11/20/2023 18:28:30 PAGE 4   
+
+ 178   2              return UART_RXING;
+ 179   2          }
+ 180   1          return UART_RXNONE;
+ 181   1      }
+ 182          
+ 183          
+*** WARNING C294 IN LINE 159 OF uart.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    287    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    120    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      6       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

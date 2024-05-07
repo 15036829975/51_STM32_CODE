@@ -1,0 +1,60 @@
+C51 COMPILER V9.60.7.0   DS18B20                                                           10/19/2023 19:49:10 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE DS18B20
+OBJECT MODULE PLACED IN .\Objects\DS18B20.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE DS18B20.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\D
+                    -S18B20.lst) TABS(2) OBJECT(.\Objects\DS18B20.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "OneWire.h"
+   3          
+   4          
+   5          #define DS18B20_SKIP_ROM      0XCC
+   6          #define DS18B20_CONVERT_T     0X44
+   7          #define DS18B20_READ_SCRATCHPAD     0XBE
+   8          
+   9          
+  10          
+  11          void DS18B20_ConvertT(void)
+  12          {
+  13   1        OneWire_Init();
+  14   1        OneWire_SendByte(DS18B20_SKIP_ROM);
+  15   1        OneWire_SendByte(DS18B20_CONVERT_T);  
+  16   1        
+  17   1        
+  18   1        
+  19   1      }
+  20          float DS18B20_ReadT(void)
+  21          {
+  22   1        unsigned char TLSB,TMSB;
+  23   1        int Temp;
+  24   1        float T;
+  25   1        OneWire_Init();
+  26   1        OneWire_SendByte(DS18B20_SKIP_ROM);
+  27   1        OneWire_SendByte(DS18B20_READ_SCRATCHPAD);
+  28   1        TLSB=OneWire_ReceiverByte();
+  29   1        TMSB=OneWire_ReceiverByte();
+  30   1      //  LCD_ShowBinNum(1,1,TMSB,8);
+  31   1      //  LCD_ShowBinNum(1,9,TLSB,8);
+  32   1        Temp=(TMSB<<8)|TLSB;
+  33   1        T=Temp/16.0;
+  34   1        return T;
+  35   1      }
+  36          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     56    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,63 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              10/05/2023 19:16:11 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          sbit RCK=P3^5;  //RCLK
+   3          sbit SCK=P3^6;  //SRCLK
+   4          sbit SER=P3^4;  //SER
+   5          void _74HC595_WriteByte(unsigned char Byte)
+   6          {
+   7   1        
+   8   1        unsigned char i;
+   9   1        for(i=0;i<8;i++)
+  10   1        {
+  11   2        SER=Byte&(0x80>>i);
+  12   2        SCK=1;
+  13   2        SCK=0;
+  14   2        P2=Byte;
+  15   2        }
+  16   1        RCK=1;
+  17   1        RCK=0;
+  18   1        
+  19   1      }
+  20          void MatrixLED_ShowColumn(unsigned char Column,Data)
+  21          {
+  22   1        _74HC595_WriteByte(Data);
+  23   1      }
+*** WARNING C280 IN LINE 20 OF main.c: 'Column': unreferenced local variable
+  24          void main()
+  25          {
+  26   1        
+  27   1        SCK=0;
+  28   1        RCK=0;
+  29   1        _74HC595_WriteByte(0XF0);
+  30   1        
+  31   1        while(1)
+  32   1        {
+  33   2        
+  34   2        }
+  35   1      
+  36   1      
+  37   1      
+  38   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     65    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

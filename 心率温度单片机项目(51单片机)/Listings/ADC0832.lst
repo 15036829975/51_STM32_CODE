@@ -1,0 +1,66 @@
+C51 COMPILER V9.60.7.0   ADC0832                                                           11/20/2023 18:28:28 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC0832
+OBJECT MODULE PLACED IN .\Objects\ADC0832.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ADC0832.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\A
+                    -DC0832.lst) TABS(2) OBJECT(.\Objects\ADC0832.obj)
+
+line level    source
+
+   1          #include"ADC0832.h"
+   2          #define uchar unsigned char
+   3          #define uint  unsigned int
+   4          sbit ADC0832_CS =P3^5;       //将CS位定义为P3.5引脚
+   5          sbit ADC0832_CLK=P3^6;       //将CLK位定义为P3.6引脚
+   6          sbit ADC0832_DIO=P3^7;       //将DIO位定义为P3.7引脚
+   7          /********************************************************************
+   8          * 名称 : dRead_ADC0832()
+   9          * 功能 : 将模拟信号转换成数字信号
+  10          * 输入 : Ch-通道选择
+  11          * 输出 : dat-转换值
+  12          *********************************************************************/
+  13          unsigned char Read_ADC0832(unsigned char Ch)
+  14          {
+  15   1        unsigned char i,dat; //定义变量
+  16   1        ADC0832_CS=1;   //一个转换周期开始
+  17   1        ADC0832_CLK=0;  //为第一个脉冲作准备
+  18   1        ADC0832_CS=0;  //CS置0，片选有效
+  19   1        
+  20   1        ADC0832_DIO=1;    //DIO置1，规定的起始信号  
+  21   1        ADC0832_CLK=1;   //第一个脉冲
+  22   1        ADC0832_CLK=0;   //第一个脉冲的下降沿，此前DIO必须是高电平
+  23   1        ADC0832_DIO=1;   //DIO置1， 通道选择信号  
+  24   1        ADC0832_CLK=1;   //第二个脉冲，第2、3个脉冲下沉之前，DI必须跟别输入两位数据用于选择通道，这里选通道CH0 
+  25   1        ADC0832_CLK=0;   //第二个脉冲下降沿 
+  26   1        ADC0832_DIO=Ch;   //DI置0，选择通道0
+  27   1        ADC0832_CLK=1;    //第三个脉冲
+  28   1        ADC0832_CLK=0;    //第三个脉冲下降沿 
+  29   1        ADC0832_DIO=1;    //第三个脉冲下沉之后，输入端DIO失去作用，应置1
+  30   1        ADC0832_CLK=1;    //第四个脉冲
+  31   1        for(i=0;i<8;i++)  //高位在前
+  32   1        {
+  33   2          ADC0832_CLK=1;         //第四个脉冲
+  34   2          ADC0832_CLK=0; 
+  35   2          dat<<=1;       //将下面储存的低位数据向右移
+  36   2          dat|=(unsigned char)ADC0832_DIO;   //将输出数据DIO通过或运算储存在dat最低位 
+  37   2        }               
+  38   1        ADC0832_CS=1;          //片选无效 
+  39   1        return dat;  //将读书的数据返回     
+  40   1      }
+  41          
+  42          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     56    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,27 @@
+C51 COMPILER V9.60.7.0   KEY                                                               09/25/2023 18:28:30 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\Key.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Key.l
+                    -st) TABS(2) OBJECT(.\Objects\Key.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "Delay.h"
+   3          unsigned char Key()
+   4          {
+   5   1        unsigned char KeyNum=0;
+   6   1        if(P2_1==0){Delay(20);while(P2_1==0);Delay(20);KeyNum=1;}
+   7   1        if(P2_2==1){Delay(20);while(P2_2==0);Delay(20);KeyNum=2;}
+   8   1        if(P2_3==2){Delay(20);while(P2_3==0);Delay(20);KeyNum=3;}
+   9   1        if(P2_4==3){Delay(20);while(P2_4==0);Delay(20);KeyNum=4;}
+  10   1        }
+*** WARNING C173 IN LINE 10 OF Key.c: missing return-expression
+  11            return KeyNum;
+*** ERROR C141 IN LINE 11 OF Key.c: syntax error near 'return', expected 'hdata'
+  12          }
+*** ERROR C141 IN LINE 12 OF Key.c: syntax error near '}', expected 'hdata'
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  2 ERROR(S)
